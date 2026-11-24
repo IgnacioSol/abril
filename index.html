@@ -150,9 +150,38 @@
   }
   .viewer.open { display: grid; }
   .viewer img { max-width: 100%; max-height: 90vh; }
+
+  /* ---------- Candado (antes de que me vaya) ---------- */
+  .lock {
+    position: fixed; inset: 0; z-index: 20;
+    background: var(--bg);
+    display: none; place-items: center;
+    padding: 20px; text-align: center;
+    transition: opacity .8s;
+  }
+  body.locked .lock { display: grid; }
+  body.locked main { display: none; }
+  .lock.fade { opacity: 0; pointer-events: none; }
+  .lock .l-lbl { font-size: .95rem; color: var(--muted); margin: 0 0 14px; }
+  .lock .l-num {
+    font-weight: 300;
+    font-size: clamp(2.4rem, 12.5vw, 5rem);
+    line-height: 1; letter-spacing: -.04em;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    margin: 0;
+  }
+  .lock .l-when { font-size: .72rem; color: var(--muted); letter-spacing: .04em; margin: 18px 0 0; }
 </style>
 </head>
 <body>
+<div class="lock" id="lock" aria-live="polite">
+  <div>
+    <p class="l-lbl" id="lockLbl"></p>
+    <p class="l-num" id="lockNum">00:00:00</p>
+    <p class="l-when" id="lockWhen"></p>
+  </div>
+</div>
 <main>
   <p class="name" id="name"></p>
 
@@ -258,8 +287,35 @@
     $("clockCR").textContent = fmt("America/Costa_Rica");
     $("clockMT").textContent = fmt("America/Denver");
   }
+  // ---------- Candado ----------
+  const abre = new Date(C.abre || C.salida).getTime();
+  $("lockLbl").textContent = C.candadoTexto || "";
+  $("lockWhen").textContent = new Intl.DateTimeFormat("es-CR", {
+    day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: "America/Costa_Rica"
+  }).format(new Date(abre)).replace(/\b([a-z]{3})\./, "$1");   // "nov." → "nov", sin tocar "a. m."
+  let locked = Date.now() < abre;
+  if (locked) document.body.classList.add("locked");
+
+  function tickLock() {
+    let diff = abre - Date.now();
+    if (diff <= 0) {
+      locked = false;
+      document.body.classList.remove("locked");
+      $("lock").style.display = "grid";            // se queda un momento encima para hacer el fundido
+      requestAnimationFrame(() => $("lock").classList.add("fade"));
+      setTimeout(() => $("lock").remove(), 900);
+      return;
+    }
+    const d = Math.floor(diff / 864e5); diff -= d * 864e5;
+    const h = Math.floor(diff / 36e5);  diff -= h * 36e5;
+    const m = Math.floor(diff / 6e4);   diff -= m * 6e4;
+    const s = Math.floor(diff / 1e3);
+    $("lockNum").textContent = (d ? d + "d " : "") + pad(h) + ":" + pad(m) + ":" + pad(s);
+  }
+
   tick();
-  setInterval(tick, 1000);
+  if (locked) tickLock();
+  setInterval(() => { tick(); if (locked) tickLock(); }, 1000);
 </script>
 </body>
 </html>

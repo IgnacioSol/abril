@@ -9,6 +9,11 @@ window.CONFIG = {
   // Cuándo me fui (para la barra de progreso). Hora de Costa Rica = -06:00
   salida: "2026-11-26T01:26:00-06:00",
 
+  // Candado: antes de esta hora solo se ve una cuenta atrás y la carta queda oculta.
+  // Si se deja vacío (""), se usa la hora de salida.
+  abre: "2026-11-26T01:26:00-06:00",
+  candadoTexto: "Se abre en",
+
   // Cuándo nos volvemos a ver (la meta de la cuenta atrás). Hora de Costa Rica = -06:00
   reencuentro: "2027-04-05T00:00:00-06:00",
 
